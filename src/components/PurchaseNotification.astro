@@ -1,0 +1,112 @@
+---
+
+---
+
+<div id="notification-toast" class="notification-toast">
+    <div class="toast-content">
+        <i class="bi bi-cart-check-fill toast-icon"></i>
+        <div class="toast-text">
+            <span class="toast-title">Pembelian Berhasil</span>
+            <span class="toast-message" id="toast-message"
+                >Ahmad baru saja membeli Prompt Skripsi</span
+            >
+        </div>
+    </div>
+</div>
+
+<style>
+    .notification-toast {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        border-left: 4px solid var(--success);
+        padding: 1rem;
+        z-index: 1000;
+        transform: translateY(150%);
+        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        max-width: 320px;
+    }
+
+    .notification-toast.show {
+        transform: translateY(0);
+    }
+
+    .toast-content {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .toast-icon {
+        font-size: 1.5rem;
+        color: var(--success);
+    }
+
+    .toast-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .toast-title {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--gray-900);
+    }
+
+    .toast-message {
+        font-size: 0.8rem;
+        color: var(--gray-600);
+    }
+</style>
+
+<script>
+    const names = [
+        "Ahmad",
+        "Budi",
+        "Citra",
+        "Dewi",
+        "Eko",
+        "Fitri",
+        "Gilang",
+        "Hani",
+        "Indra",
+        "Joko",
+    ];
+    const products = [
+        "Prompt Skripsi",
+        "Prompt Proposal",
+        "Prompt Artikel",
+        "Prompt Analisis Data",
+    ];
+
+    const toast = document.getElementById("notification-toast");
+    const messageEl = document.getElementById("toast-message");
+
+    function showNotification() {
+        if (!toast || !messageEl) return;
+
+        const randomName = names[Math.floor(Math.random() * names.length)];
+        const randomProduct =
+            products[Math.floor(Math.random() * products.length)];
+
+        // Update message
+        messageEl.textContent = `${randomName} baru saja membeli ${randomProduct}`;
+
+        // Show toast
+        toast.classList.add("show");
+
+        // Hide after 4 seconds
+        setTimeout(() => {
+            toast.classList.remove("show");
+        }, 4000);
+    }
+
+    // Initial delay then loop
+    setTimeout(() => {
+        showNotification();
+        setInterval(showNotification, 15000); // Show every 15 seconds
+    }, 5000);
+</script>

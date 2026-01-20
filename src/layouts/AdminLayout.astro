@@ -1,96 +1,98 @@
 ---
-import 'bootstrap-icons/font/bootstrap-icons.css';
-import { getSessionFromCookie } from '../lib/auth';
+import "bootstrap-icons/font/bootstrap-icons.css";
+import { getSessionFromCookie } from "../lib/auth";
 
 export interface Props {
   title: string;
   currentPage?: string;
 }
 
-const { title, currentPage = '' } = Astro.props;
+const { title, currentPage = "" } = Astro.props;
 
 // Check authentication
-const session = getSessionFromCookie(Astro.request.headers.get('cookie'));
+const session = getSessionFromCookie(Astro.request.headers.get("cookie"));
 if (!session) {
-  return Astro.redirect('/admin/login');
+  return Astro.redirect("/admin/login");
 }
 
 const navItems = [
-  { href: '/admin', label: 'Dashboard', icon: 'bi-speedometer2' },
-  { href: '/admin/catalogs', label: 'Katalog', icon: 'bi-box-seam' },
-  { href: '/admin/orders', label: 'Pesanan', icon: 'bi-clipboard-check' },
-  { href: '/admin/settings', label: 'Pengaturan', icon: 'bi-gear' },
+  { href: "/admin", label: "Dashboard", icon: "bi-speedometer2" },
+  { href: "/admin/catalogs", label: "Katalog", icon: "bi-box-seam" },
+  { href: "/admin/orders", label: "Pesanan", icon: "bi-clipboard-check" },
+  { href: "/admin/settings", label: "Pengaturan", icon: "bi-gear" },
 ];
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{title} | Admin FunSkripsi</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-</head>
-<body>
-  <div class="admin-layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <a href="/admin" class="logo">
-          <i class="bi bi-mortarboard-fill logo-icon"></i>
-          <span class="logo-text">FunSkripsi</span>
-        </a>
-      </div>
-      
-      <nav class="sidebar-nav">
-        {navItems.map(item => (
-          <a 
-            href={item.href} 
-            class={`nav-item ${currentPage === item.href ? 'active' : ''}`}
-          >
-            <i class={`bi ${item.icon} nav-icon`}></i>
-            <span class="nav-label">{item.label}</span>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} | Admin FunSkripsi</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div class="admin-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <a href="/admin" class="logo">
+            <i class="bi bi-mortarboard-fill logo-icon"></i>
+            <span class="logo-text">FunSkripsi</span>
           </a>
-        ))}
-      </nav>
-      
-      <div class="sidebar-footer">
-        <div class="user-info">
-          <i class="bi bi-person-circle user-icon"></i>
-          <span class="user-name">{session.username}</span>
         </div>
-        <form action="/api/auth/logout" method="POST">
-          <button type="submit" class="logout-btn">
-            <i class="bi bi-box-arrow-right"></i> Logout
-          </button>
-        </form>
-      </div>
-    </aside>
-    
-    <!-- Overlay for mobile -->
-    <div class="sidebar-overlay"></div>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <header class="content-header">
-        <div style="display: flex; align-items: center;">
-          <button class="mobile-toggle-btn">
-            <i class="bi bi-list"></i>
-          </button>
-          <h1>{title}</h1>
+        <nav class="sidebar-nav">
+          {
+            navItems.map((item) => (
+              <a
+                href={item.href}
+                class={`nav-item ${currentPage === item.href ? "active" : ""}`}
+              >
+                <i class={`bi ${item.icon} nav-icon`} />
+                <span class="nav-label">{item.label}</span>
+              </a>
+            ))
+          }
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="user-info">
+            <i class="bi bi-person-circle user-icon"></i>
+            <span class="user-name">{session.username}</span>
+          </div>
+          <form action="/api/auth/logout" method="POST">
+            <button type="submit" class="logout-btn">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+          </form>
         </div>
-      </header>
-      
-      <div class="content-body">
-        <slot />
-      </div>
-    </main>
-  </div>
-</body>
+      </aside>
+
+      <!-- Overlay for mobile -->
+      <div class="sidebar-overlay"></div>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="content-header">
+          <div style="display: flex; align-items: center;">
+            <button class="mobile-toggle-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            <h1>{title}</h1>
+          </div>
+        </header>
+
+        <div class="content-body">
+          <slot />
+        </div>
+      </main>
+    </div>
+  </body>
 </html>
 
 <style is:global>
-  @import '../styles/global.css';
+  @import "../styles/global.css";
 </style>
 
 <style>
@@ -98,7 +100,7 @@ const navItems = [
     display: flex;
     min-height: 100vh;
   }
-  
+
   .sidebar {
     width: 260px;
     background-color: var(--white);
@@ -108,13 +110,14 @@ const navItems = [
     position: fixed;
     height: 100vh;
     z-index: 100;
+    overflow-y: auto;
   }
-  
+
   .sidebar-header {
     padding: 1.5rem;
     border-bottom: 1px solid var(--gray-100);
   }
-  
+
   .logo {
     display: flex;
     align-items: center;
@@ -122,22 +125,22 @@ const navItems = [
     color: var(--primary-600);
     text-decoration: none;
   }
-  
+
   .logo-icon {
     font-size: 1.5rem;
   }
-  
+
   .logo-text {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--gray-900);
   }
-  
+
   .sidebar-nav {
     flex: 1;
     padding: 1rem 0;
   }
-  
+
   .nav-item {
     display: flex;
     align-items: center;
@@ -148,31 +151,31 @@ const navItems = [
     transition: all var(--transition);
     border-left: 3px solid transparent;
   }
-  
+
   .nav-item:hover {
     background-color: var(--gray-50);
     color: var(--primary-600);
   }
-  
+
   .nav-item.active {
     background-color: var(--primary-50);
     color: var(--primary-600);
     border-left-color: var(--primary-600);
   }
-  
+
   .nav-icon {
     font-size: 1.125rem;
   }
-  
+
   .nav-label {
     font-weight: 500;
   }
-  
+
   .sidebar-footer {
     padding: 1.5rem;
     border-top: 1px solid var(--gray-200);
   }
-  
+
   .user-info {
     display: flex;
     align-items: center;
@@ -180,15 +183,15 @@ const navItems = [
     margin-bottom: 1rem;
     color: var(--gray-700);
   }
-  
+
   .user-icon {
     font-size: 1.25rem;
   }
-  
+
   .user-name {
     font-weight: 500;
   }
-  
+
   .logout-btn {
     width: 100%;
     padding: 0.5rem 1rem;
@@ -204,34 +207,34 @@ const navItems = [
     justify-content: center;
     gap: 0.5rem;
   }
-  
+
   .logout-btn:hover {
     background-color: #fef2f2;
     border-color: #fee2e2;
   }
-  
+
   .main-content {
     flex: 1;
     margin-left: 260px;
     background: var(--gray-50);
     min-height: 100vh;
   }
-  
+
   .content-header {
     background: var(--white);
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--gray-200);
   }
-  
+
   .content-header h1 {
     font-size: 1.5rem;
     color: var(--gray-800);
   }
-  
+
   .content-body {
     padding: 2rem;
   }
-  
+
   /* Mobile Trigger */
   .mobile-toggle-btn {
     display: none;
@@ -249,30 +252,30 @@ const navItems = [
       transition: transform var(--transition);
       box-shadow: var(--shadow-xl);
     }
-    
+
     .sidebar.active {
       transform: translateX(0);
     }
-    
+
     .main-content {
       margin-left: 0;
     }
-    
+
     .mobile-toggle-btn {
       display: block;
     }
-    
+
     /* Overlay */
     .sidebar-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       z-index: 99;
       opacity: 0;
       visibility: hidden;
       transition: opacity var(--transition);
     }
-    
+
     .sidebar-overlay.active {
       opacity: 1;
       visibility: visible;
@@ -282,15 +285,15 @@ const navItems = [
 
 <script>
   // Mobile Sidebar Toggle
-  const toggleBtn = document.querySelector('.mobile-toggle-btn');
-  const sidebar = document.querySelector('.sidebar');
-  const overlay = document.querySelector('.sidebar-overlay');
-  
+  const toggleBtn = document.querySelector(".mobile-toggle-btn");
+  const sidebar = document.querySelector(".sidebar");
+  const overlay = document.querySelector(".sidebar-overlay");
+
   function toggleSidebar() {
-    sidebar?.classList.toggle('active');
-    overlay?.classList.toggle('active');
+    sidebar?.classList.toggle("active");
+    overlay?.classList.toggle("active");
   }
-  
-  toggleBtn?.addEventListener('click', toggleSidebar);
-  overlay?.addEventListener('click', toggleSidebar);
+
+  toggleBtn?.addEventListener("click", toggleSidebar);
+  overlay?.addEventListener("click", toggleSidebar);
 </script>
