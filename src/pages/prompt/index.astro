@@ -1,0 +1,214 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import CatalogCard from '../../components/CatalogCard.astro';
+import TypeModal from '../../components/TypeModal.astro';
+import { getCatalogs } from '../../lib/db';
+
+const url = new URL(Astro.request.url);
+const category = url.searchParams.get('category') || undefined;
+
+let catalogs: any[] = [];
+try {
+  catalogs = await getCatalogs(category);
+} catch (e) {
+  console.error('Error fetching catalogs:', e);
+}
+
+// Fallback sample data if DB is empty or fails
+if (catalogs.length === 0) {
+  catalogs = [
+    { id: 1, title: 'Prompt Skripsi Kuantitatif - Manajemen', description: 'Panduan lengkap penyusunan skripsi kuantitatif bidang manajemen SDM, Pemasaran, dan Keuangan.', category: 'skripsi', price: 75000 },
+    { id: 2, title: 'Prompt Skripsi Kualitatif - Psikologi', description: 'Paket prompt untuk penelitian kualitatif fenemonologi dan studi kasus bidang psikologi.', category: 'skripsi', price: 75000 },
+    { id: 3, title: 'Prompt Proposal Penelitian', description: 'Cara cepat menyusun proposal penelitian yang sistematis dan menarik.', category: 'proposal', price: 50000 },
+    { id: 4, title: 'Prompt Artikel Jurnal Scopus', description: 'Teknik menulis artikel ilmiah standar jurnal internasional terindeks Scopus.', category: 'artikel', price: 90000 },
+  ];
+  
+  if (category) {
+    catalogs = catalogs.filter(c => c.category === category);
+  }
+}
+
+const activeCategory = category || 'all';
+---
+
+<BaseLayout title="Katalog Prompt">
+  <Header showCTA={false} />
+  
+  <main class="page-content">
+    <div class="container">
+      <div class="page-header text-center">
+        <h1>Katalog Prompt AI</h1>
+        <p>Pilih kategori prompt yang sesuai dengan kebutuhan akademik Anda.</p>
+      </div>
+      
+      <!-- Category Filter -->
+      <div class="category-filter">
+        <a href="/prompt" class={`filter-btn ${activeCategory === 'all' ? 'active' : ''}`}>
+          <i class="bi bi-grid"></i> Semua
+        </a>
+        <a href="/prompt?category=skripsi" class={`filter-btn ${activeCategory === 'skripsi' ? 'active' : ''}`}>
+          <i class="bi bi-mortarboard"></i> Skripsi
+        </a>
+        <a href="/prompt?category=proposal" class={`filter-btn ${activeCategory === 'proposal' ? 'active' : ''}`}>
+          <i class="bi bi-file-earmark-text"></i> Proposal
+        </a>
+        <a href="/prompt?category=artikel" class={`filter-btn ${activeCategory === 'artikel' ? 'active' : ''}`}>
+          <i class="bi bi-journal-text"></i> Artikel
+        </a>
+      </div>
+      
+      <!-- Products Grid -->
+      <div class="products-grid">
+        {catalogs.length > 0 ? (
+          catalogs.map(cat => (
+            <CatalogCard 
+              id={cat.id}
+              title={cat.title}
+              description={cat.description}
+              category={cat.category}
+              price={cat.price}
+              thumbnail_url={cat.thumbnail_url}
+            />
+          ))
+        ) : (
+          <div class="empty-state">
+            <i class="bi bi-search empty-icon"></i>
+            <h3>Tidak ada produk ditemukan</h3>
+            <p>Coba pilih kategori lain atau cek kembali nanti.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </main>
+  
+  <TypeModal catalogId={0} catalogTitle="" />
+  
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-content {
+    padding: 4rem 0;
+    min-height: 80vh;
+  }
+  
+  .page-header {
+    margin-bottom: 3rem;
+  }
+  
+  .page-header h1 {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Filter */
+  .category-filter {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+  }
+  
+  .filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-full);
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    color: var(--gray-600);
+    font-weight: 500;
+    text-decoration: none;
+    transition: all var(--transition);
+  }
+  
+  .filter-btn:hover {
+    border-color: var(--gray-300);
+    background: var(--gray-50);
+    color: var(--gray-900);
+  }
+  
+  .filter-btn.active {
+    background: var(--primary-600);
+    color: var(--white);
+    border-color: var(--primary-600);
+    box-shadow: var(--shadow);
+  }
+  
+  /* Grid */
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+  
+  /* Empty State */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-xl);
+    border: 1px dashed var(--gray-300);
+  }
+  
+  .empty-icon {
+    font-size: 3rem;
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+    display: block;
+  }
+  
+  @media (max-width: 1024px) {
+    .products-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .products-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+  }
+</style>
+
+<script>
+  // Modal Logic
+  const typeModal = document.getElementById('typeModal');
+  const modalCatalogTitle = document.getElementById('modalCatalogTitle');
+  const buyBtns = document.querySelectorAll('.buy-btn');
+  
+  let currentCatalogId = 0;
+  
+  buyBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const card = (e.target as HTMLElement).closest('.catalog-card');
+      const title = card?.querySelector('.card-title')?.textContent || '';
+      currentCatalogId = parseInt((e.target as HTMLElement).getAttribute('data-catalog-id') || '0');
+      
+      if (modalCatalogTitle) modalCatalogTitle.textContent = title;
+      typeModal?.classList.add('active');
+    });
+  });
+  
+  // Type selection logic
+  const typeOptions = document.querySelectorAll('.type-option');
+  
+  typeOptions.forEach(option => {
+    option.addEventListener('click', () => {
+      const type = option.getAttribute('data-type');
+      if (currentCatalogId && type) {
+        window.location.href = `/purchase/${currentCatalogId}?type=${type}`;
+      }
+    });
+  });
+</script>

@@ -1,0 +1,265 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import { getCatalogById, updateCatalog } from '../../../../lib/db';
+
+const { id } = Astro.params;
+const catalogId = parseInt(id || '0');
+
+let catalog: any = null;
+let error = '';
+
+// Fetch and update logic same as before...
+try {
+  catalog = await getCatalogById(catalogId);
+} catch (e) {
+  console.error('Error loading catalog:', e);
+}
+
+// Fallback sample
+if (!catalog) {
+  catalog = {
+    id: catalogId,
+    title: 'Prompt Skripsi Kuantitatif',
+    description: 'Example description',
+    category: 'skripsi',
+    type: 'kuantitatif',
+    price: 75000,
+    drive_link: '',
+    thumbnail_url: '',
+    is_active: true,
+  };
+}
+
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    
+    const updateData = {
+      title: formData.get('title')?.toString() || '',
+      description: formData.get('description')?.toString() || '',
+      category: formData.get('category')?.toString() || '',
+      type: formData.get('type')?.toString() || '',
+      price: parseFloat(formData.get('price')?.toString() || '0'),
+      drive_link: formData.get('drive_link')?.toString() || '',
+      thumbnail_url: formData.get('thumbnail_url')?.toString() || '',
+      is_active: formData.get('is_active') === 'on',
+    };
+    
+    if (!updateData.title || !updateData.category || !updateData.type || !updateData.price) {
+      error = 'Semua field wajib harus diisi!';
+    } else {
+      await updateCatalog(catalogId, updateData);
+      return Astro.redirect('/admin/catalogs?success=updated');
+    }
+  } catch (e) {
+    console.error('Error updating catalog:', e);
+    error = 'Terjadi kesalahan. Silakan coba lagi.';
+  }
+}
+---
+
+<AdminLayout title={`Edit - ${catalog.title}`} currentPage="/admin/catalogs">
+  <div class="edit-page">
+    <div class="form-card">
+      <div class="form-header">
+        <a href="/admin/catalogs" class="back-link">
+          <i class="bi bi-arrow-left"></i> Kembali ke Katalog
+        </a>
+        <h2>Edit Produk</h2>
+        <p>Perbarui informasi produk prompt.</p>
+      </div>
+      
+      {error && (
+        <div class="alert alert-error">{error}</div>
+      )}
+      
+      <form method="POST" class="product-form">
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label class="form-label" for="title">Nama Produk *</label>
+            <input 
+              type="text" 
+              id="title" 
+              name="title" 
+              class="form-input"
+              value={catalog.title}
+              required
+            />
+          </div>
+          
+          <div class="form-group full-width">
+            <label class="form-label" for="description">Deskripsi</label>
+            <textarea 
+              id="description" 
+              name="description" 
+              class="form-textarea"
+              rows="4"
+            >{catalog.description}</textarea>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="category">Kategori *</label>
+            <select id="category" name="category" class="form-select" required>
+              <option value="">Pilih kategori</option>
+              <option value="skripsi" selected={catalog.category === 'skripsi'}>Skripsi</option>
+              <option value="proposal" selected={catalog.category === 'proposal'}>Proposal</option>
+              <option value="artikel" selected={catalog.category === 'artikel'}>Artikel</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="type">Tipe Penelitian *</label>
+            <select id="type" name="type" class="form-select" required>
+              <option value="">Pilih tipe</option>
+              <option value="kuantitatif" selected={catalog.type === 'kuantitatif'}>Kuantitatif</option>
+              <option value="kualitatif" selected={catalog.type === 'kualitatif'}>Kualitatif</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="price">Harga (Rp) *</label>
+            <input 
+              type="number" 
+              id="price" 
+              name="price" 
+              class="form-input"
+              value={catalog.price}
+              min="0"
+              required
+            />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="drive_link">Link Google Drive</label>
+            <input 
+              type="url" 
+              id="drive_link" 
+              name="drive_link" 
+              class="form-input"
+              value={catalog.drive_link}
+            />
+          </div>
+          
+          <div class="form-group full-width">
+            <label class="form-label" for="thumbnail_url">URL Thumbnail</label>
+            <input 
+              type="url" 
+              id="thumbnail_url" 
+              name="thumbnail_url" 
+              class="form-input"
+              value={catalog.thumbnail_url}
+            />
+          </div>
+          
+          <div class="form-group full-width">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                name="is_active"
+                checked={catalog.is_active}
+              />
+              <span>Produk Aktif</span>
+            </label>
+            <small class="form-hint">Produk aktif akan ditampilkan di katalog publik</small>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <a href="/admin/catalogs" class="btn btn-secondary">Batal</a>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Simpan Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .edit-page {
+    max-width: 800px;
+  }
+  
+  .form-card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+  }
+  
+  .form-header {
+    margin-bottom: 2rem;
+  }
+  
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-500);
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  
+  .back-link:hover {
+    color: var(--primary-600);
+  }
+  
+  .form-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .form-header p {
+    color: var(--gray-500);
+    margin: 0;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  
+  .form-group.full-width {
+    grid-column: 1 / -1;
+  }
+  
+  .form-hint {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--gray-400);
+  }
+  
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--gray-700);
+  }
+  
+  .checkbox-label input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--gray-100);
+  }
+  
+  @media (max-width: 640px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

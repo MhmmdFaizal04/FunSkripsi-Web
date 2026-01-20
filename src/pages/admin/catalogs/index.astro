@@ -1,0 +1,226 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getAllCatalogs } from '../../../lib/db';
+import { formatPrice, getCategoryLabel, getTypeLabel } from '../../../lib/utils';
+
+// Fetch catalogs
+let catalogs: any[] = [];
+let message = '';
+
+try {
+  catalogs = await getAllCatalogs();
+} catch (e) {
+  console.error('Error loading catalogs:', e);
+}
+
+// Fallback sample
+if (catalogs.length === 0) {
+  catalogs = [
+    {
+      id: 1,
+      title: 'Prompt Skripsi Kuantitatif',
+      category: 'skripsi',
+      type: 'kuantitatif',
+      price: 75000,
+      is_active: true,
+    }
+  ];
+}
+---
+
+<AdminLayout title="Kelola Katalog" currentPage="/admin/catalogs">
+  <div class="catalogs-page">
+    <!-- Header -->
+    <div class="page-actions">
+      <a href="/admin/catalogs/create" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Tambah Produk
+      </a>
+    </div>
+    
+    {message && (
+      <div class="alert alert-success">{message}</div>
+    )}
+    
+    <!-- Catalogs Table -->
+    {catalogs.length > 0 ? (
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nama Produk</th>
+              <th>Kategori</th>
+              <th>Tipe</th>
+              <th>Harga</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {catalogs.map(catalog => (
+              <tr>
+                <td>#{catalog.id}</td>
+                <td>
+                  <div class="product-name">
+                    <span>{catalog.title}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge badge-primary">{getCategoryLabel(catalog.category)}</span>
+                </td>
+                <td>{getTypeLabel(catalog.type)}</td>
+                <td class="font-semibold text-primary">{formatPrice(catalog.price)}</td>
+                <td>
+                  {catalog.is_active ? (
+                    <span class="badge badge-success">Aktif</span>
+                  ) : (
+                    <span class="badge badge-error">Nonaktif</span>
+                  )}
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <a href={`/admin/catalogs/${catalog.id}/edit`} class="btn btn-sm btn-outline">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button 
+                      class="btn btn-sm btn-danger delete-btn"
+                      data-id={catalog.id}
+                      data-title={catalog.title}
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <div class="empty-state">
+        <div class="empty-icon"><i class="bi bi-box-seam"></i></div>
+        <h3>Belum ada produk</h3>
+        <p>Mulai tambahkan produk prompt pertama Anda.</p>
+        <a href="/admin/catalogs/create" class="btn btn-primary">
+          <i class="bi bi-plus-lg"></i> Tambah Produk
+        </a>
+      </div>
+    )}
+  </div>
+  
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Konfirmasi Hapus</h3>
+        <button class="modal-close" id="closeDeleteModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Apakah Anda yakin ingin menghapus produk:</p>
+        <p class="delete-product-name" id="deleteProductName"></p>
+        <p class="text-gray text-sm">Tindakan ini tidak dapat dibatalkan.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelDelete">Batal</button>
+        <form method="POST" action="/api/catalogs/delete" id="deleteForm">
+          <input type="hidden" name="id" id="deleteId" />
+          <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .catalogs-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .page-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .product-name {
+    max-width: 300px;
+  }
+  
+  .product-name span {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--gray-900);
+    font-weight: 500;
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+  }
+  
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: var(--gray-300);
+  }
+  
+  .empty-state h3 {
+    font-size: 1.5rem;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+  }
+  
+  .delete-product-name {
+    font-weight: 600;
+    color: var(--primary-600);
+    margin: 0.5rem 0;
+  }
+</style>
+
+<script>
+  // Same delete modal script
+  const deleteModal = document.getElementById('deleteModal');
+  const closeBtn = document.getElementById('closeDeleteModal');
+  const cancelBtn = document.getElementById('cancelDelete');
+  const deleteProductName = document.getElementById('deleteProductName');
+  const deleteIdInput = document.getElementById('deleteId');
+  
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = (btn as HTMLElement).getAttribute('data-id');
+      const title = (btn as HTMLElement).getAttribute('data-title');
+      
+      if (deleteProductName) deleteProductName.textContent = title;
+      if (deleteIdInput) (deleteIdInput as HTMLInputElement).value = id || '';
+      
+      deleteModal?.classList.add('active');
+    });
+  });
+  
+  closeBtn?.addEventListener('click', () => {
+    deleteModal?.classList.remove('active');
+  });
+  
+  cancelBtn?.addEventListener('click', () => {
+    deleteModal?.classList.remove('active');
+  });
+  
+  deleteModal?.addEventListener('click', (e) => {
+    if (e.target === deleteModal) {
+      deleteModal.classList.remove('active');
+    }
+  });
+</script>

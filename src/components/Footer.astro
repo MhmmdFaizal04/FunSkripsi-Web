@@ -1,0 +1,156 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <a href="/" class="logo">
+          <i class="bi bi-mortarboard-fill logo-icon"></i>
+          <span class="logo-text">FunSkripsi</span>
+        </a>
+        <p class="footer-desc">
+          Solusi cerdas untuk pembuatan skripsi, proposal, dan artikel akademik dengan bantuan AI.
+        </p>
+      </div>
+      
+      <div class="footer-links">
+        <h4>Navigasi</h4>
+        <ul>
+          <li><a href="/">Beranda</a></li>
+          <li><a href="/prompt">Katalog Prompt</a></li>
+          <li><a href="/#cara-kerja">Cara Kerja</a></li>
+          <li><a href="/#testimoni">Testimoni</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-links">
+        <h4>Kategori</h4>
+        <ul>
+          <li><a href="/prompt?category=skripsi">Prompt Skripsi</a></li>
+          <li><a href="/prompt?category=proposal">Prompt Proposal</a></li>
+          <li><a href="/prompt?category=artikel">Prompt Artikel</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-links">
+        <h4>Kontak</h4>
+        <ul>
+          <li>
+            <a href="https://wa.me/6281234567890" target="_blank" rel="noopener">
+              <i class="bi bi-whatsapp"></i> WhatsApp
+            </a>
+          </li>
+          <li>
+            <a href="mailto:support@funskripsi.com">
+              <i class="bi bi-envelope"></i> Email
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; {currentYear} FunSkripsi. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background-color: var(--primary-800);
+    color: var(--white);
+    padding: 4rem 0 0;
+  }
+  
+  .footer-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 3rem;
+    padding-bottom: 3rem;
+  }
+  
+  .footer-brand .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    margin-bottom: 1rem;
+  }
+  
+  .footer-brand .logo-icon {
+    font-size: 1.5rem;
+    color: var(--primary-300);
+  }
+  
+  .footer-brand .logo-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--white);
+  }
+  
+  .footer-desc {
+    color: var(--primary-200);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  
+  .footer-links h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 1rem;
+  }
+  
+  .footer-links ul {
+    list-style: none;
+  }
+  
+  .footer-links li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .footer-links a {
+    color: var(--primary-200);
+    text-decoration: none;
+    transition: color var(--transition);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .footer-links a:hover {
+    color: var(--white);
+  }
+  
+  .footer-bottom {
+    padding: 1.5rem 0;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .footer-bottom p {
+    color: var(--primary-300);
+    font-size: 0.875rem;
+    margin: 0;
+  }
+  
+  @media (max-width: 768px) {
+    .footer-content {
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    
+    .footer-brand {
+      grid-column: 1 / -1;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .footer-content {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

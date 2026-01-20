@@ -1,0 +1,308 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAllCatalogs, getOrders } from '../../lib/db';
+import { formatPrice, formatDate, getStatusLabel, getStatusColor } from '../../lib/utils';
+
+// Fetch data logic same as before...
+let catalogs: any[] = [];
+let orders: any[] = [];
+let stats = {
+  totalProducts: 0,
+  totalOrders: 0,
+  pendingOrders: 0,
+  revenue: 0,
+};
+
+try {
+  catalogs = await getAllCatalogs();
+  orders = await getOrders();
+  
+  stats.totalProducts = catalogs.length;
+  stats.totalOrders = orders.length;
+  stats.pendingOrders = orders.filter(o => o.status === 'pending').length;
+  stats.revenue = orders.filter(o => o.status === 'paid' || o.status === 'delivered')
+    .reduce((sum, o) => sum + parseFloat(o.price || 0), 0);
+} catch (e) {
+  console.error('Error loading data:', e);
+}
+
+const recentOrders = orders.slice(0, 5);
+---
+
+<AdminLayout title="Dashboard" currentPage="/admin">
+  <div class="dashboard">
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <i class="bi bi-box-seam"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{stats.totalProducts}</span>
+          <span class="stat-label">Total Produk</span>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <i class="bi bi-cart-check"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{stats.totalOrders}</span>
+          <span class="stat-label">Total Pesanan</span>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon yellow">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{stats.pendingOrders}</span>
+          <span class="stat-label">Menunggu Konfirmasi</span>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <i class="bi bi-wallet2"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{formatPrice(stats.revenue)}</span>
+          <span class="stat-label">Total Pendapatan</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="section-card">
+      <h3><i class="bi bi-lightning-charge-fill text-warning"></i> Quick Actions</h3>
+      <div class="quick-actions">
+        <a href="/admin/catalogs/create" class="action-btn">
+          <i class="bi bi-plus-circle-fill action-icon-bi text-primary"></i>
+          <span>Tambah Produk</span>
+        </a>
+        <a href="/admin/catalogs" class="action-btn">
+          <i class="bi bi-list-ul action-icon-bi text-gray"></i>
+          <span>Kelola Katalog</span>
+        </a>
+        <a href="/admin/orders" class="action-btn">
+          <i class="bi bi-clipboard-data action-icon-bi text-gray"></i>
+          <span>Lihat Pesanan</span>
+        </a>
+        <a href="/admin/settings" class="action-btn">
+          <i class="bi bi-gear-fill action-icon-bi text-gray"></i>
+          <span>Pengaturan</span>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Recent Orders -->
+    <div class="section-card">
+      <div class="section-header">
+        <h3><i class="bi bi-clipboard-check-fill text-primary"></i> Pesanan Terbaru</h3>
+        <a href="/admin/orders" class="btn btn-sm btn-outline">Lihat Semua</a>
+      </div>
+      
+      {recentOrders.length > 0 ? (
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Produk</th>
+                <th>Pelanggan</th>
+                <th>Status</th>
+                <th>Tanggal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentOrders.map(order => (
+                <tr>
+                  <td>#{order.id}</td>
+                  <td>{order.catalog_title || 'N/A'}</td>
+                  <td>
+                    <div class="customer-info">
+                      <span class="customer-name">{order.customer_name}</span>
+                      <span class="customer-email">{order.customer_email}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="status-badge" style={`background: ${getStatusColor(order.status)}20; color: ${getStatusColor(order.status)}`}>
+                      {getStatusLabel(order.status)}
+                    </span>
+                  </td>
+                  <td class="text-gray">{formatDate(order.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div class="empty-state-small">
+          <p>Belum ada pesanan</p>
+        </div>
+      )}
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .stat-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+  }
+  
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+  
+  .stat-icon.blue { background: var(--primary-100); color: var(--primary-600); }
+  .stat-icon.green { background: #d1fae5; color: #059669; }
+  .stat-icon.yellow { background: #fef3c7; color: #d97706; }
+  .stat-icon.purple { background: #ede9fe; color: #7c3aed; }
+  
+  .stat-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    line-height: 1.2;
+  }
+  
+  .stat-label {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+  }
+  
+  /* Section Card */
+  .section-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+  }
+  
+  .section-card h3 {
+    font-size: 1.125rem;
+    color: var(--gray-900);
+    margin-bottom: 1.5rem;
+  }
+  
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .section-header h3 {
+    margin-bottom: 0;
+  }
+  
+  /* Quick Actions */
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--gray-700);
+    font-weight: 500;
+    transition: all var(--transition);
+    border: 1px solid var(--gray-200);
+  }
+  
+  .action-btn:hover {
+    background: var(--white);
+    border-color: var(--primary-300);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+  }
+  
+  .action-icon-bi {
+    font-size: 1.25rem;
+  }
+  
+  /* Customer Info */
+  .customer-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .customer-name {
+    font-weight: 500;
+    color: var(--gray-900);
+  }
+  
+  .customer-email {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+  }
+  
+  /* Status Badge */
+  .status-badge {
+    display: inline-flex;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  /* Empty State */
+  .empty-state-small {
+    text-align: center;
+    padding: 2rem;
+    color: var(--gray-500);
+  }
+  
+  @media (max-width: 1200px) {
+    .stats-grid, .quick-actions {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .stats-grid, .quick-actions {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

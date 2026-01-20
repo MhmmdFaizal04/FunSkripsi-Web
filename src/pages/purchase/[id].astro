@@ -1,0 +1,352 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import QRISPopup from '../../components/QRISPopup.astro';
+import { getCatalogById, getSettings } from '../../lib/db';
+import { formatPrice } from '../../lib/utils';
+
+const { id } = Astro.params;
+const url = new URL(Astro.request.url);
+const selectedType = url.searchParams.get('type') || 'kuantitatif';
+
+const catalogId = parseInt(id || '0');
+let catalog: any = null;
+let settings: any = {};
+
+try {
+  catalog = await getCatalogById(catalogId);
+  settings = await getSettings();
+} catch (e) {
+  console.error('Error loading data:', e);
+}
+
+// Fallback data
+if (!catalog) {
+  catalog = {
+    id: catalogId,
+    title: 'Prompt Skripsi - Paket Lengkap',
+    description: 'Panduan lengkap penyusunan skripsi.',
+    category: 'skripsi',
+    price: 75000,
+  };
+}
+
+const qrisImage = settings.qris_image || '/images/qris.svg';
+const whatsappNumber = settings.whatsapp_number || '6281234567890';
+---
+
+<BaseLayout title={`Beli - ${catalog.title}`}>
+  <Header showCTA={false} />
+  
+  <main class="page-content">
+    <div class="container">
+      <div class="purchase-grid">
+        <!-- Form Section -->
+        <div class="form-section">
+          <div class="section-header">
+            <h1>Detail Pembelian</h1>
+            <p>Lengkapi data diri Anda untuk menyelesaikan pemesanan.</p>
+          </div>
+          
+          <div class="purchase-card">
+            <form id="purchaseForm" class="purchase-form">
+              <input type="hidden" id="catalogId" value={catalog.id} />
+              <input type="hidden" id="selectedType" value={selectedType} />
+              <input type="hidden" id="whatsappNumber" value={whatsappNumber} />
+              <input type="hidden" id="catalogTitle" value={catalog.title} />
+              <input type="hidden" id="catalogPrice" value={catalog.price} />
+              
+              <div class="form-group">
+                <label class="form-label" for="name">Nama Lengkap</label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-person input-icon"></i>
+                  <input 
+                    type="text" 
+                    id="name" 
+                    class="form-input with-icon" 
+                    placeholder="Contoh: Budi Santoso"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="email">Alamat Email</label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-envelope input-icon"></i>
+                  <input 
+                    type="email" 
+                    id="email" 
+                    class="form-input with-icon" 
+                    placeholder="Contoh: budi@email.com"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="phone">Nomor WhatsApp</label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-whatsapp input-icon"></i>
+                  <input 
+                    type="tel" 
+                    id="phone" 
+                    class="form-input with-icon" 
+                    placeholder="Contoh: 081234567890"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <button type="submit" class="btn btn-primary btn-block btn-lg">
+                Dapatkan Akses <i class="bi bi-arrow-right"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Summary Section -->
+        <div class="summary-section">
+          <div class="summary-card">
+            <h3>Ringkasan Pesanan</h3>
+            
+            <div class="product-summary">
+              <div class="product-icon">
+                <i class="bi bi-journal-check"></i>
+              </div>
+              <div class="product-details">
+                <h4>{catalog.title}</h4>
+                <div class="badge badge-primary">{selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}</div>
+              </div>
+            </div>
+            
+            <div class="price-breakdown">
+              <div class="price-row">
+                <span>Harga Produk</span>
+                <span>{formatPrice(catalog.price)}</span>
+              </div>
+              <div class="price-row">
+                <span>Biaya Layanan</span>
+                <span>Rp 0</span>
+              </div>
+              <div class="divider"></div>
+              <div class="price-row total">
+                <span>Total Pembayaran</span>
+                <span class="text-primary">{formatPrice(catalog.price)}</span>
+              </div>
+            </div>
+            
+            <div class="security-badge">
+              <i class="bi bi-shield-check"></i>
+              <span>Pembayaran Aman & Terverifikasi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <QRISPopup qrisImage={qrisImage} whatsappNumber={whatsappNumber} />
+  
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-content {
+    padding: 3rem 0;
+    background-color: var(--gray-50);
+    min-height: 90vh;
+  }
+  
+  .purchase-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+  
+  .purchase-card, .summary-card {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+  }
+  
+  .section-header {
+    margin-bottom: 2rem;
+  }
+  
+  .section-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Form inputs with icons */
+  .input-icon-wrapper {
+    position: relative;
+  }
+  
+  .input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    font-size: 1.1rem;
+    pointer-events: none;
+  }
+  
+  .form-input.with-icon {
+    padding-left: 3rem;
+  }
+  
+  .form-input.with-icon:focus + .input-icon,
+  .form-input.with-icon:focus ~ .input-icon {
+    color: var(--primary-500);
+  }
+  
+  /* Summary */
+  .summary-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  
+  .product-summary {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .product-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--primary-50);
+    color: var(--primary-600);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  
+  .product-details h4 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+  }
+  
+  .price-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .price-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    color: var(--gray-600);
+  }
+  
+  .divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 0.5rem 0;
+  }
+  
+  .price-row.total {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: var(--gray-900);
+  }
+  
+  .security-badge {
+    margin-top: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    background: var(--gray-50);
+    padding: 0.75rem;
+    border-radius: var(--radius);
+  }
+  
+  @media (max-width: 768px) {
+    .purchase-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .summary-section {
+      order: -1;
+    }
+  }
+</style>
+
+<script>
+  // Add payment handling logic here (same as before but adapted for new UI)
+  const form = document.getElementById('purchaseForm');
+  const qrisModal = document.getElementById('qrisModal');
+  const confirmBtn = document.getElementById('confirmPaymentBtn');
+  
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Validate inputs
+    const name = (document.getElementById('name') as HTMLInputElement).value;
+    const email = (document.getElementById('email') as HTMLInputElement).value;
+    const phone = (document.getElementById('phone') as HTMLInputElement).value;
+    
+    if (name && email && phone) {
+      // Save order via API
+      try {
+        const catalogId = (document.getElementById('catalogId') as HTMLInputElement).value;
+        const selectedType = (document.getElementById('selectedType') as HTMLInputElement).value;
+        
+        await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            catalog_id: catalogId,
+            customer_name: name,
+            customer_email: email,
+            customer_phone: phone,
+            selected_type: selectedType
+          })
+        });
+        
+        // Show QRIS Modal
+        qrisModal?.classList.add('active');
+      } catch (err) {
+        console.error('Error creating order:', err);
+        alert('Terjadi kesalahan. Silakan coba lagi.');
+      }
+    }
+  });
+  
+  confirmBtn?.addEventListener('click', () => {
+    const name = (document.getElementById('name') as HTMLInputElement).value;
+    const title = (document.getElementById('catalogTitle') as HTMLInputElement).value;
+    const type = (document.getElementById('selectedType') as HTMLInputElement).value;
+    const price = (document.getElementById('catalogPrice') as HTMLInputElement).value;
+    const whatsappNumber = (document.getElementById('whatsappNumber') as HTMLInputElement).value;
+    
+    const message = `Halo Admin FunSkripsi, saya sudah melakukan pembayaran untuk:
+    
+Produk: ${title}
+Tipe: ${type}
+Nama: ${name}
+Nominal: Rp ${parseInt(price).toLocaleString('id-ID')}
+
+Mohon segera diproses. Terima kasih!`;
+    
+    const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    window.open(waLink, '_blank');
+  });
+</script>

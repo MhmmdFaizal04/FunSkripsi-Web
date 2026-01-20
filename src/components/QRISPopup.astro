@@ -1,0 +1,127 @@
+---
+export interface Props {
+  qrisImage: string;
+  whatsappNumber: string;
+}
+
+const { qrisImage, whatsappNumber } = Astro.props;
+---
+
+<div class="modal-overlay" id="qrisModal">
+  <div class="modal qris-modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Pembayaran QRIS</h3>
+      <button class="modal-close" id="closeQrisModal">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="qris-container">
+        <div class="qris-image-wrapper">
+          <img src={qrisImage} alt="QRIS Payment" id="qrisImage" />
+        </div>
+        
+        <div class="qris-info">
+          <div class="step-item">
+            <span class="step-icon"><i class="bi bi-qr-code-scan"></i></span>
+            <span class="step-text">Scan QR Code dengan e-wallet/m-banking</span>
+          </div>
+          <div class="step-item">
+            <span class="step-icon"><i class="bi bi-currency-dollar"></i></span>
+            <span class="step-text">Masukkan nominal sesuai harga produk</span>
+          </div>
+          <div class="step-item">
+            <span class="step-icon"><i class="bi bi-check-circle"></i></span>
+            <span class="step-text">Selesaikan pembayaran & simpan bukti</span>
+          </div>
+        </div>
+        
+        <button class="btn btn-success btn-lg btn-block" id="confirmPaymentBtn">
+          <i class="bi bi-whatsapp"></i> Konfirmasi Pembayaran
+        </button>
+        
+        <p class="qris-note">
+          Klik tombol di atas untuk mengirim konfirmasi dan bukti transfer ke WhatsApp kami.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .qris-modal {
+    max-width: 420px;
+  }
+  
+  .qris-container {
+    text-align: center;
+  }
+  
+  .qris-image-wrapper {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+  }
+  
+  .qris-image-wrapper img {
+    max-width: 250px;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+  }
+  
+  .qris-info {
+    text-align: left;
+    margin-bottom: 1.5rem;
+    background-color: var(--gray-50);
+    padding: 1rem;
+    border-radius: var(--radius);
+  }
+  
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .step-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .step-icon {
+    color: var(--primary-600);
+    font-size: 1.125rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  
+  .step-text {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+  }
+  
+  .qris-note {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-top: 1rem;
+  }
+</style>
+
+<script define:vars={{ whatsappNumber }}>
+  const qrisModal = document.getElementById('qrisModal');
+  const closeBtn = document.getElementById('closeQrisModal');
+  
+  closeBtn?.addEventListener('click', () => {
+    qrisModal?.classList.remove('active');
+  });
+  
+  qrisModal?.addEventListener('click', (e) => {
+    if (e.target === qrisModal) {
+      qrisModal.classList.remove('active');
+    }
+  });
+</script>

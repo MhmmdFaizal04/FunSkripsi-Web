@@ -1,0 +1,199 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { verifyPassword, createSession } from '../../lib/auth';
+import { getAdminByUsername } from '../../lib/db';
+
+// Check if already logged in
+const cookieHeader = Astro.request.headers.get('cookie');
+if (cookieHeader?.includes('admin_session')) {
+  return Astro.redirect('/admin');
+}
+
+let error = '';
+
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const username = formData.get('username')?.toString() || '';
+    const password = formData.get('password')?.toString() || '';
+    
+    if (!username || !password) {
+      error = 'Username dan password harus diisi!';
+    } else {
+      const admin = await getAdminByUsername(username);
+      
+      if (admin && await verifyPassword(password, admin.password_hash)) {
+        const sessionToken = createSession(admin.id, admin.username);
+        
+        // Set cookie and redirect
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': '/admin',
+            'Set-Cookie': `admin_session=${sessionToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400`,
+          },
+        });
+      } else {
+        error = 'Username atau password salah!';
+      }
+    }
+  } catch (e) {
+    console.error('Login error:', e);
+    error = 'Terjadi kesalahan. Silakan coba lagi.';
+  }
+}
+---
+
+<BaseLayout title="Admin Login">
+  <div class="login-page">
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="login-icon">
+            <i class="bi bi-shield-lock-fill"></i>
+          </div>
+          <h1>Admin Login</h1>
+          <p>Masuk ke dashboard FunSkripsi</p>
+        </div>
+        
+        {error && (
+          <div class="alert alert-error">
+            <i class="bi bi-exclamation-circle"></i> {error}
+          </div>
+        )}
+        
+        <form method="POST" class="login-form">
+          <div class="form-group">
+            <label class="form-label" for="username">Username</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-person input-icon"></i>
+              <input 
+                type="text" 
+                id="username" 
+                name="username" 
+                class="form-input with-icon"
+                placeholder="Masukkan username admin"
+                required
+              />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-key input-icon"></i>
+              <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                class="form-input with-icon"
+                placeholder="Masukkan password"
+                required
+              />
+            </div>
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-block btn-lg">
+            Masuk Dashboard
+          </button>
+        </form>
+        
+        <div class="login-footer">
+          <a href="/">
+            <i class="bi bi-arrow-left"></i> Kembali ke Beranda
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gray-50);
+    padding: 2rem;
+  }
+  
+  .login-container {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .login-card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+  }
+  
+  .login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .login-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--primary-100);
+    color: var(--primary-600);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1.5rem;
+  }
+  
+  .login-header h1 {
+    font-size: 1.5rem;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+  }
+  
+  .login-header p {
+    color: var(--gray-500);
+    margin: 0;
+  }
+  
+  /* Input Icons */
+  .input-icon-wrapper {
+    position: relative;
+  }
+  
+  .input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    pointer-events: none;
+  }
+  
+  .form-input.with-icon {
+    padding-left: 2.75rem;
+  }
+  
+  .login-footer {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-100);
+  }
+  
+  .login-footer a {
+    color: var(--gray-500);
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .login-footer a:hover {
+    color: var(--primary-600);
+  }
+</style>

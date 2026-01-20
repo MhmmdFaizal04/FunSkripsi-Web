@@ -1,0 +1,142 @@
+---
+export interface Props {
+  catalogId: number;
+  catalogTitle: string;
+}
+
+const { catalogId, catalogTitle } = Astro.props;
+---
+
+<div class="modal-overlay" id="typeModal">
+  <div class="modal type-modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Pilih Jenis Penelitian</h3>
+      <button class="modal-close" id="closeTypeModal">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <p class="modal-subtitle">Pilih jenis penelitian untuk: <strong id="modalCatalogTitle">{catalogTitle}</strong></p>
+      
+      <div class="type-options">
+        <button class="type-option" data-type="kuantitatif">
+          <div class="type-icon">
+            <i class="bi bi-bar-chart-fill"></i>
+          </div>
+          <div class="type-info">
+            <h4>Kuantitatif</h4>
+            <p>Data angka & analisis statistik</p>
+          </div>
+          <i class="bi bi-chevron-right arrow-icon"></i>
+        </button>
+        
+        <button class="type-option" data-type="kualitatif">
+          <div class="type-icon">
+            <i class="bi bi-file-text-fill"></i>
+          </div>
+          <div class="type-info">
+            <h4>Kualitatif</h4>
+            <p>Data deskriptif & naratif</p>
+          </div>
+          <i class="bi bi-chevron-right arrow-icon"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .type-modal {
+    max-width: 500px;
+  }
+  
+  .modal-subtitle {
+    color: var(--gray-600);
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+  }
+  
+  .modal-subtitle strong {
+    color: var(--primary-600);
+    display: block;
+    margin-top: 0.25rem;
+  }
+  
+  .type-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .type-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition);
+    text-align: left;
+    width: 100%;
+  }
+  
+  .type-option:hover {
+    border-color: var(--primary-500);
+    background: var(--primary-50);
+  }
+  
+  .type-icon {
+    width: 48px;
+    height: 48px;
+    background-color: var(--primary-100);
+    color: var(--primary-600);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  
+  .type-info {
+    flex: 1;
+  }
+  
+  .type-info h4 {
+    font-size: 1rem;
+    color: var(--gray-900);
+    margin-bottom: 0.125rem;
+  }
+  
+  .type-info p {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    margin: 0;
+  }
+  
+  .arrow-icon {
+    color: var(--gray-400);
+    font-size: 1.25rem;
+  }
+  
+  .type-option:hover .arrow-icon {
+    color: var(--primary-600);
+  }
+</style>
+
+<script>
+  // This script will be enhanced in the catalog page
+  const typeModal = document.getElementById('typeModal');
+  const closeBtn = document.getElementById('closeTypeModal');
+  
+  closeBtn?.addEventListener('click', () => {
+    typeModal?.classList.remove('active');
+  });
+  
+  typeModal?.addEventListener('click', (e) => {
+    if (e.target === typeModal) {
+      typeModal.classList.remove('active');
+    }
+  });
+</script>

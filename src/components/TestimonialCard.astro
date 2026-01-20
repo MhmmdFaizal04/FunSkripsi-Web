@@ -1,0 +1,104 @@
+---
+export interface Props {
+  name: string;
+  role: string;
+  content: string;
+  avatar?: string;
+  rating?: number;
+}
+
+const { name, role, content, avatar, rating = 5 } = Astro.props;
+---
+
+<div class="testimonial-card">
+  <div class="testimonial-header">
+    <div class="testimonial-avatar">
+      {avatar ? (
+        <img src={avatar} alt={name} />
+      ) : (
+        <span>{name.charAt(0).toUpperCase()}</span>
+      )}
+    </div>
+    <div class="testimonial-info">
+      <h4>{name}</h4>
+      <span class="role">{role}</span>
+    </div>
+  </div>
+  
+  <div class="testimonial-rating">
+    {Array.from({ length: 5 }).map((_, i) => (
+      <i class={`bi ${i < rating ? 'bi-star-fill' : 'bi-star'} star`}></i>
+    ))}
+  </div>
+  
+  <p class="testimonial-content">"{content}"</p>
+</div>
+
+<style>
+  .testimonial-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    transition: all var(--transition);
+  }
+  
+  .testimonial-card:hover {
+    border-color: var(--gray-300);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .testimonial-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .testimonial-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--primary-100);
+    color: var(--primary-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  
+  .testimonial-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .testimonial-avatar span {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  
+  .testimonial-info h4 {
+    font-size: 1rem;
+    color: var(--gray-900);
+    margin-bottom: 0.125rem;
+  }
+  
+  .testimonial-info .role {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+  }
+  
+  .testimonial-rating {
+    margin-bottom: 0.75rem;
+    color: #fbbf24;
+    font-size: 0.9rem;
+  }
+  
+  .testimonial-content {
+    font-size: 0.95rem;
+    color: var(--gray-600);
+    line-height: 1.6;
+    margin: 0;
+  }
+</style>

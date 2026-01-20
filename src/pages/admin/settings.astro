@@ -1,0 +1,310 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getSettings, updateSetting, getAdminByUsername, updateAdminPassword } from '../../lib/db';
+import { hashPassword, getSessionFromCookie } from '../../lib/auth';
+
+// Get current session
+const session = getSessionFromCookie(Astro.request.headers.get('cookie'));
+
+let settings: Record<string, string> = {};
+let error = '';
+let success = '';
+
+try {
+  settings = await getSettings();
+} catch (e) {
+  console.error('Error loading settings:', e);
+}
+
+// Default values
+settings.qris_image = settings.qris_image || '/images/qris.svg';
+settings.whatsapp_number = settings.whatsapp_number || '6281234567890';
+settings.youtube_preview = settings.youtube_preview || 'https://www.youtube.com/embed/dQw4w9WgXcQ';
+
+// Form handling logic same as before...
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const action = formData.get('action')?.toString();
+    
+    if (action === 'update_settings') {
+      const qrisImage = formData.get('qris_image')?.toString() || '';
+      const whatsappNumber = formData.get('whatsapp_number')?.toString() || '';
+      const youtubePreview = formData.get('youtube_preview')?.toString() || '';
+      
+      await updateSetting('qris_image', qrisImage);
+      await updateSetting('whatsapp_number', whatsappNumber);
+      await updateSetting('youtube_preview', youtubePreview);
+      
+      settings.qris_image = qrisImage;
+      settings.whatsapp_number = whatsappNumber;
+      settings.youtube_preview = youtubePreview;
+      
+      success = 'Pengaturan berhasil disimpan!';
+    } else if (action === 'change_password') {
+      const currentPassword = formData.get('current_password')?.toString() || '';
+      const newPassword = formData.get('new_password')?.toString() || '';
+      const confirmPassword = formData.get('confirm_password')?.toString() || '';
+      
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        error = 'Semua field password harus diisi!';
+      } else if (newPassword !== confirmPassword) {
+        error = 'Password baru tidak cocok!';
+      } else if (newPassword.length < 6) {
+        error = 'Password minimal 6 karakter!';
+      } else if (session) {
+        // Update password
+        const newHash = await hashPassword(newPassword);
+        await updateAdminPassword(session.id, newHash);
+        success = 'Password berhasil diubah!';
+      }
+    }
+  } catch (e) {
+    console.error('Error updating settings:', e);
+    error = 'Terjadi kesalahan. Silakan coba lagi.';
+  }
+}
+---
+
+<AdminLayout title="Pengaturan" currentPage="/admin/settings">
+  <div class="settings-page">
+    {error && (
+      <div class="alert alert-error"><i class="bi bi-exclamation-circle-fill"></i> {error}</div>
+    )}
+    
+    {success && (
+      <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> {success}</div>
+    )}
+    
+    <div class="settings-grid">
+      <!-- General Settings -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h3><i class="bi bi-sliders"></i> Pengaturan Umum</h3>
+        </div>
+        
+        <form method="POST" class="settings-form">
+          <input type="hidden" name="action" value="update_settings" />
+          
+          <div class="form-group">
+            <label class="form-label" for="qris_image">URL Gambar QRIS</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-image input-icon"></i>
+              <input 
+                type="text" 
+                id="qris_image" 
+                name="qris_image" 
+                class="form-input with-icon"
+                value={settings.qris_image}
+                placeholder="/images/qris.svg atau https://..."
+              />
+            </div>
+            <small class="form-hint">
+              URL gambar QRIS untuk pembayaran. Bisa berupa path lokal atau URL eksternal.
+            </small>
+            
+            {settings.qris_image && (
+              <div class="qris-preview">
+                <p>Preview:</p>
+                <img src={settings.qris_image} alt="QRIS Preview" />
+              </div>
+            )}
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="whatsapp_number">Nomor WhatsApp</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-whatsapp input-icon"></i>
+              <input 
+                type="text" 
+                id="whatsapp_number" 
+                name="whatsapp_number" 
+                class="form-input with-icon"
+                value={settings.whatsapp_number}
+                placeholder="6281234567890"
+              />
+            </div>
+            <small class="form-hint">
+              Format: 62xxxxxxxxxx (tanpa + atau spasi)
+            </small>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="youtube_preview">Link Video YouTube</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-youtube input-icon"></i>
+              <input 
+                type="text" 
+                id="youtube_preview" 
+                name="youtube_preview" 
+                class="form-input with-icon"
+                value={settings.youtube_preview}
+                placeholder="https://www.youtube.com/embed/VIDEO_ID"
+              />
+            </div>
+            <small class="form-hint">
+              Link embed YouTube untuk preview di landing page
+            </small>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Simpan Pengaturan
+          </button>
+        </form>
+      </div>
+      
+      <!-- Change Password -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h3><i class="bi bi-shield-lock"></i> Ubah Password</h3>
+        </div>
+        
+        <form method="POST" class="settings-form">
+          <input type="hidden" name="action" value="change_password" />
+          
+          <div class="form-group">
+            <label class="form-label" for="current_password">Password Saat Ini</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-key input-icon"></i>
+              <input 
+                type="password" 
+                id="current_password" 
+                name="current_password" 
+                class="form-input with-icon"
+                placeholder="Masukkan password saat ini"
+              />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="new_password">Password Baru</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-lock input-icon"></i>
+              <input 
+                type="password" 
+                id="new_password" 
+                name="new_password" 
+                class="form-input with-icon"
+                placeholder="Masukkan password baru"
+                minlength="6"
+              />
+            </div>
+            <small class="form-hint">Minimal 6 karakter</small>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="confirm_password">Konfirmasi Password Baru</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-check2-circle input-icon"></i>
+              <input 
+                type="password" 
+                id="confirm_password" 
+                name="confirm_password" 
+                class="form-input with-icon"
+                placeholder="Ulangi password baru"
+              />
+            </div>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg"></i> Ubah Password
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .settings-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+  
+  .settings-card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+  }
+  
+  .card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--gray-100);
+    background: var(--gray-50);
+  }
+  
+  .card-header h3 {
+    font-size: 1rem;
+    color: var(--gray-900);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .settings-form {
+    padding: 1.5rem;
+  }
+  
+  .form-hint {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--gray-400);
+  }
+  
+  /* Input Icons */
+  .input-icon-wrapper {
+    position: relative;
+  }
+  
+  .input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    pointer-events: none;
+  }
+  
+  .form-input.with-icon {
+    padding-left: 2.75rem;
+  }
+  
+  .qris-preview {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+    text-align: center;
+    border: 1px dashed var(--gray-300);
+  }
+  
+  .qris-preview p {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-bottom: 0.5rem;
+  }
+  
+  .qris-preview img {
+    max-width: 200px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+  }
+  
+  @media (max-width: 1024px) {
+    .settings-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,169 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getOrders } from '../../../lib/db';
+import { formatPrice, formatDate, getStatusLabel, getStatusColor, getTypeLabel } from '../../../lib/utils';
+
+let orders: any[] = [];
+try {
+  orders = await getOrders();
+} catch (e) {
+  console.error('Error loading orders:', e);
+}
+
+// Sample fallback
+if (orders.length === 0) {
+  orders = [
+    {
+      id: 1,
+      catalog_title: 'Prompt Skripsi Kuantitatif',
+      category: 'skripsi',
+      price: 75000,
+      customer_name: 'John Doe',
+      customer_email: 'john@example.com',
+      customer_phone: '081234567890',
+      selected_type: 'kuantitatif',
+      status: 'pending',
+      created_at: new Date().toISOString(),
+    }
+  ];
+}
+---
+
+<AdminLayout title="Pesanan" currentPage="/admin/orders">
+  <div class="orders-page">
+    {orders.length > 0 ? (
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Produk</th>
+              <th>Pelanggan</th>
+              <th>Kontak</th>
+              <th>Harga</th>
+              <th>Status</th>
+              <th>Tanggal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map(order => (
+              <tr>
+                <td>#{order.id}</td>
+                <td>
+                  <div class="product-name">
+                    <span>{order.catalog_title || 'N/A'}</span>
+                    <div class="text-xs text-gray mt-1">
+                      {getTypeLabel(order.selected_type)}
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="customer-info">
+                    <span class="customer-name">{order.customer_name}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="contact-info">
+                    <div class="contact-item">
+                      <i class="bi bi-envelope"></i> {order.customer_email}
+                    </div>
+                    <div class="contact-item">
+                      <i class="bi bi-whatsapp"></i> {order.customer_phone}
+                    </div>
+                  </div>
+                </td>
+                <td class="font-semibold">{formatPrice(order.price || 0)}</td>
+                <td>
+                  <span class="status-badge" style={`background: ${getStatusColor(order.status)}20; color: ${getStatusColor(order.status)}`}>
+                    {getStatusLabel(order.status)}
+                  </span>
+                </td>
+                <td class="text-gray">{formatDate(order.created_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <div class="empty-state">
+        <div class="empty-icon"><i class="bi bi-clipboard-x"></i></div>
+        <h3>Belum ada pesanan</h3>
+        <p>Pesanan akan muncul di sini setelah pelanggan melakukan pembelian.</p>
+      </div>
+    )}
+  </div>
+</AdminLayout>
+
+<style>
+  .orders-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .product-name span {
+    font-weight: 500;
+  }
+  
+  .text-xs {
+    font-size: 0.75rem;
+  }
+  
+  .mt-1 {
+    margin-top: 0.25rem;
+  }
+  
+  .customer-name {
+    font-weight: 500;
+    color: var(--gray-900);
+  }
+  
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+  }
+  
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--gray-600);
+  }
+  
+  .contact-item i {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+  }
+  
+  .status-badge {
+    display: inline-flex;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+  }
+  
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: var(--gray-300);
+  }
+  
+  .empty-state h3 {
+    font-size: 1.5rem;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+  }
+</style>
