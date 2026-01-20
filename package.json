@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@astrojs/node": "^9.5.2",
+    "@astrojs/vercel": "^9.0.4",
     "astro": "^5.16.11",
     "bcrypt": "^6.0.0",
     "bootstrap-icons": "^1.13.1",
